@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+
+	<h1 align="center">
+		<font color="lightGreen">
+			Listado de pedidos (Thymeleaf)
+		</font>
+	</h1>
+
+	<p align="center">
+		<a href="verFormularioPedidos">Nuevo</a>
+	</p>
+	
+	<div align="center">
+		<h2 th:text="${mensaje}"></h2>	
+	</div>
+
+	<table align="center" border="1">
+		<tr>
+			<th>Codigo</th>
+			<th>Cliente</th>
+			<th>Fecha</th>
+			<th>Estado</th>
+		</tr>			
+		<tr th:each="pedido: ${listaPedidos}">
+			<td>
+				<a th:href="@{seleccionarPedido(id=${pedido.id})}" th:text="${pedido.codigo}"></a>
+			</td>			
+			<td th:text="${pedido.cliente.nombre}"/>			
+			<td th:text="${pedido.fecha}"/>			
+			<td th:text="${pedido.estado}"/>			
+		</tr>
+	</table>	
+
+
+</body>
+</html>

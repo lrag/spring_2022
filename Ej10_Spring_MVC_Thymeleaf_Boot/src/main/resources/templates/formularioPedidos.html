@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+
+	<h1 align="center">
+		<font color="lightGreen">
+			Formulario de pedidos (Thymeleaf)
+		</font>
+	</h1>
+	
+	<div align="center">
+		<h2 th:text="${mensaje}"></h2>	
+	</div>
+	
+	<form id="formulario" method="POST" th:object="${pedido}">
+	
+		<div align="center">
+			<input type="submit" value="Insertar"  onclick="formulario.action='insertarPedido'"/>
+			<input type="submit" value="Modificar" onclick="formulario.action='modificarPedido'"/>
+			<input type="submit" value="Borrar"    onclick="formulario.action='borrarPedido'"/>
+			<input type="submit" value="Aceptar"   onclick="formulario.action='aceptarPedido'"/>
+			<input type="button" value="Vaciar"    onclick="//vaciarFormulario()"/>
+			<input type="button" value="Cancelar"  onclick="document.location='verListadoPedidos'"/>
+		</div>
+		
+		<input type="hidden" th:field="*{id}" id="idPedido"/>
+		
+		<table align="center">
+			<tr>
+				<td>Código</td>
+				<td>
+					<input type="text" th:field="*{codigo}" id="codigo"/>
+					<span th:errors="*{codigo}"></span>
+				</td>
+			</tr>
+			<tr>
+				<td>Fecha</td>
+				<td>
+					<input type="text" th:field="*{fecha}" id="fecha"/>
+					<span th:errors="*{fecha}"></span>
+				</td>
+			</tr>
+			<tr>
+				<td>Cliente</td>
+				<td>
+                    <select th:field="*{cliente.id}">
+                         <option value="">Seleccione...</option>
+                         <option th:each="cliente : ${listaClientes}"
+                            th:value="${cliente.id}"
+                            th:utext="${cliente.nombre}"/>
+                	</select>				
+					<span th:errors="*{cliente.id}"></span>
+				</td>
+			</tr>
+			<tr>
+				<td>Estado</td>
+				<td>
+					<input type="text" th:field="*{estado}" id="estado"/>
+					<span th:errors="*{estado}"></span>
+				</td>
+			</tr>
+		</table>
+	
+	</form>
+
+	<hr/>
+	
+	<form id="formularioDetalles" method="POST" th:object="${detalle}">
+		<div align="center">
+			<input type="submit" value="Insertar"  onclick="formularioDetalles.action='insertarDetalle'"/>
+			<input type="submit" value="Modificar" onclick="formularioDetalles.action='modificarDetalle'"/>
+			<input type="submit" value="Borrar"    onclick="formularioDetalles.action='borrarDetalle'"/>
+			<input type="button" value="Vaciar"    onclick="//vaciarFormulario()"/>
+		</div>
+
+		<input type="hidden" th:field="*{id}" id="idDetalle"/>
+		<input type="hidden" th:field="*{pedido.id}" id="idPedido"/>
+	
+		<table align="center">
+			<tr>
+				<td>Producto</td>
+				<td>
+                    <select th:field="*{producto.id}">
+                         <option value="">Seleccione...</option>
+                         <option th:each="producto : ${listaProductos}"
+                            th:value="${producto.id}"
+                            th:utext="${producto.nombre}"/>
+                	</select>					
+					<span th:errors="*{producto.id}"></span>					
+				</td>
+			</tr>
+			<tr>
+				<td>Cantidad</td>
+				<td>
+					<input type="text" th:field="*{cantidad}" id="cantidad"/>
+					<span th:errors="*{cantidad}"></span>					
+				</td>
+			</tr>
+			<tr>
+				<td>Precio</td>
+				<td>
+					<input type="text" th:field="*{precio}" id="precio"/>
+					<span th:errors="*{precio}"></span>					
+				</td>
+			</tr>
+		</table>
+		
+		<table align="center" border="1">
+			<tr>
+				<th>Producto</th>
+				<th>Cantidad</th>
+				<th>Precio</th>
+				<th>Total</th>
+			</tr>			
+
+			<tr th:each="detalle: ${pedido.detalles}">
+				<td>
+					<a th:href="@{seleccionarDetalle(id=${detalle.id})}" th:text="${detalle.producto.nombre}"></a>
+				</td>			
+				<td th:text="${detalle.cantidad}"/>			
+				<td th:text="${detalle.precio}"/>			
+				<td th:text="${detalle.precio*detalle.cantidad}"/>			
+			</tr>
+		</table>	
+	
+	</form>	
+
+
+</body>
+</html>
