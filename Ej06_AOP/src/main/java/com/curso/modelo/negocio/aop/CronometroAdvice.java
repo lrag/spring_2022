@@ -2,15 +2,10 @@ package com.curso.modelo.negocio.aop;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.aop.AfterReturningAdvice;
-import org.springframework.aop.MethodBeforeAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.curso.util.Logger;
@@ -43,6 +38,7 @@ public class CronometroAdvice implements MethodInterceptor {
 		return retorno;
 	}
 	
+	
 }
 
 /*
@@ -55,7 +51,7 @@ public class CronometroAdvice implements MethodBeforeAdvice, AfterReturningAdvic
 	@Autowired
 	private Logger logger;
 	
-	private Map<String, Long> horasLlegada = new HashMap<>();
+	private Map<String, Long> horasLlegada = new ConcurrentHashMap<>();
 	
 	//Esto no es 'thread safe'
 	//private long inicio;

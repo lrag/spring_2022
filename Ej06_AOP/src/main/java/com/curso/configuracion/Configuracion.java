@@ -34,9 +34,9 @@ public class Configuracion {
 	
 	//ADVICE: Sabe QUÉ hay que hacer. No sabe ni cuándo hay que hacelo ni quién es el target.
 	//Estas clases guardan el código del cual hemos sacado factor común 
-	//LogAdvice y CronometroAdvice están registrados como @Component
+	//LogAdvice y CronometroAdvice están registrados como @Component	
 	
-	//POINTCUT: Sabe cuándo, no sabe qué y no sabe quién
+	//POINTCUT: Sabe cuándo, no sabe qué y no sabe quién es el target
 	@Bean
 	JdkRegexpMethodPointcut negocioPointcut(){
 		JdkRegexpMethodPointcut pc = new JdkRegexpMethodPointcut();		
@@ -46,7 +46,7 @@ public class Configuracion {
 		//com.curso.modelo.negocio.*.*(..): Cualquier metodo de cualquier clase del paquete negocio
 		pc.setPattern("com.curso.modelo.negocio.*.*(..)");
 		return pc;
-	}
+	}	
 	
 	//ADVISOR: Junta el QUÉ con el CUÁNDO 
 	@Bean
@@ -55,7 +55,7 @@ public class Configuracion {
 		dpa.setPointcut(negocioPointcut);
 		dpa.setAdvice(logAdvice);
 		return dpa;
-	}		
+	}			
 
 	@Bean
 	DefaultPointcutAdvisor cronometroAdvisor(CronometroAdvice cronometroAdvice, Pointcut negocioPointcut) {
@@ -63,8 +63,8 @@ public class Configuracion {
 		dpa.setPointcut(negocioPointcut);
 		dpa.setAdvice(cronometroAdvice);
 		return dpa;
-	}		
-	
+	}			
+
 	//Proxy
 	//No damos de alta el proxy. Damos de alta al objeto que programará el proxy y luego lo registrará en el contenedor de esprín
 	@Bean
@@ -81,15 +81,16 @@ public class Configuracion {
 		
 		//Quién es el target
 		//Habría que satisfacer las dependencias de GestorClientes 
+		//Esto es una inner bean
 		GestorClientes gc = new GestorClientesImpl();
 		pfb.setTarget(gc);
 		
 		//Qué advisors hay que tener en cuenta
-		pfb.setInterceptorNames("cronometroAdvisor","logAdvisor");
+		pfb.setInterceptorNames("cronometroAdvisor", "logAdvisor");
 		
 		return pfb;
 	}	
-	
+		
 }
 
 
@@ -113,13 +114,15 @@ class ServicioClientes_PROXY implements GestorClientes {
 
 	@Override
 	public void borrar(Cliente cliente) {
-		//logAdvice.before(null, null, cliente);
+		logAdvice.before(null, null, cliente);
 		target.borrar(cliente);
 		logAdvice.afterReturning(cliente, null, null, cliente);
 	}
 	
 }
 */
+
+
 
 
 

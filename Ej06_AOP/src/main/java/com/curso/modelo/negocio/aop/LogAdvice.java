@@ -13,7 +13,7 @@ import com.curso.util.Logger;
 //
 //El advice es el que sabe lo que hay que hacer
 //No sabe cuando
-//No sabe delante de quien
+//No sabe quién es el target
 //
 
 @Component

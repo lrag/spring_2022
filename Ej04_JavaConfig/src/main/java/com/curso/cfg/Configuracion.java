@@ -56,7 +56,7 @@ public class Configuracion {
 	PeliculaDao peliculaDao() {
 		System.out.println("Configuracion.peliculaDao()");
 		PeliculaDao peliculaDao = new PeliculaDao();
-
+		
 		/*Si hacemos esto estaremos creando otro datasource!!!!
 		DriverManagerDataSource ds = new DriverManagerDataSource();
 		ds.setDriverClassName("org.h2.Driver");

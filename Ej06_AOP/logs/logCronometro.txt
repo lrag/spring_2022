@@ -1,0 +1,4 @@
+2022-06-27T12:28:52.986207700: Llamada al metodo insertar de class com.curso.modelo.negocio.GestorClientesImpl procesada en 506 milisegundos.
+2022-06-27T12:28:53.996208: Llamada al metodo borrar de class com.curso.modelo.negocio.GestorClientesImpl procesada en 1010 milisegundos.
+2022-06-27T12:28:55.510303300: Llamada al metodo insertar de class com.curso.modelo.negocio.GestorEmpleados procesada en 1513 milisegundos.
+2022-06-27T12:28:57.515350800: Llamada al metodo borrar de class com.curso.modelo.negocio.GestorEmpleados procesada en 2004 milisegundos.

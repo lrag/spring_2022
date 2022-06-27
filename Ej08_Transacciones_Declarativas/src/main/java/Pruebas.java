@@ -21,7 +21,7 @@ public class Pruebas {
 		
 		GestorPedidos gp = appCtx.getBean(GestorPedidos.class);
 		try {
-			gp.aceptar(2);
+			gp.aceptar(1);
 		} catch (Exception e) {
 			System.out.println("Error:"+e.getMessage());
 		}		
