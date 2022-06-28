@@ -2,8 +2,12 @@ package com.curso.modelo.negocio;
 
 import java.util.List;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +17,24 @@ import com.curso.modelo.entidad.Pelicula;
 import com.curso.modelo.persistencia.PeliculaDao;
 
 @Service("gestorPeliculas")
-public class GestorPeliculas {
+public class GestorPeliculas /*implements ApplicationContextAware, InitializingBean*/ {
 
+	/*Hasta Spring 4.2
+	private ApplicationContext applicationContext;
+	private GestorPeliculas proxy;
+	
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		proxy = applicationContext.getBean(GestorPeliculas.class);
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+	}
+	*/			
+	
+	
 	@Autowired private PeliculaDao peliculaDao;
 	//Desde Spring 4.3:
 	@Autowired private GestorPeliculas proxy;
@@ -36,12 +56,12 @@ public class GestorPeliculas {
 
 	}
 
-	// @Transactional(propagation=Propagation.REQUIRES_NEW)
+	//@Transactional(propagation=Propagation.REQUIRES_NEW)
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = { Exception.class })
 	public void insertar(List<Pelicula> peliculas) throws Exception {
 		for (Pelicula p : peliculas) {
-			this.insertar(p);
-			//proxy.insertar(p);
+			//this.insertar(p);
+			proxy.insertar(p); 
 		}
 	}
 
@@ -57,5 +77,7 @@ public class GestorPeliculas {
 	public void borrarPeliculas() {
 		peliculaDao.borrarPeliculas();		
 	}
+
+
 
 }

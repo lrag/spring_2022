@@ -10,7 +10,7 @@ import com.curso.modelo.negocio.excepcion.PerritoPilotoException;
 @Service
 public class GestorOfertas {
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class )
 	public String obtenerPerritoPiloto(boolean hayPerritoPiloto) throws PerritoPilotoException {
 
 		System.out.print("Obteniendo perrito piloto...");

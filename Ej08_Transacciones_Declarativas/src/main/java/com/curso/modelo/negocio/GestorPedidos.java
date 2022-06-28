@@ -16,7 +16,7 @@ import com.curso.modelo.negocio.excepcion.PerritoPilotoException;
 import com.curso.modelo.persistencia.PedidoDao;
 
 @Service
-@Transactional
+
 public class GestorPedidos {
 
 	@Autowired private PedidoDao pedidoDao;
@@ -33,7 +33,7 @@ public class GestorPedidos {
 	
 	@Transactional(propagation = Propagation.REQUIRED, 
 			       rollbackFor = { Exception.class }, //Esto incluye DatosBancariosException, ExistenciasException y PerritoPilotoException
-			       noRollbackFor = { PerritoPilotoException.class } )
+			       noRollbackFor = { PerritoPilotoException.class }) //Este método nunca lanza PerritoPilotoException porque tiene un ty/catch
 	public void aceptar(Integer idPedido) throws Exception {
 		
 		Pedido pedido = pedidoDao.buscar(idPedido);
