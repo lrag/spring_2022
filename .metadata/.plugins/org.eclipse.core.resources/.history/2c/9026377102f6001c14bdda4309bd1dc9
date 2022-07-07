@@ -1,0 +1,4 @@
+2022-06-27T11:47:20.779150500: Llamada al método insertar de class com.curso.modelo.negocio.GestorClientesImpl
+2022-06-27T11:47:21.293148400: Fin de la llamada al método insertar de class com.curso.modelo.negocio.GestorClientesImpl
+2022-06-27T11:47:21.293148400: Llamada al método borrar de class com.curso.modelo.negocio.GestorClientesImpl
+2022-06-27T11:47:22.307180400: Fin de la llamada al método borrar de class com.curso.modelo.negocio.GestorClientesImpl

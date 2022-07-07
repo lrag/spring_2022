@@ -1,0 +1,15 @@
+INDEX VERSION 1.131
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\663172084.index
+\Ej09_Spring_Web\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\3552646678.index
+\Ej10_Spring_MVC_Boot_EjemploPedidos\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2074860129.index
+\Ej10_Spring_MVC_Boot\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2149027513.index
+\Ej10_Spring_MVC_Thymeleaf_Boot\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\2796628411.index
+\Ej10_Spring_MVC\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\807740685.index
+\Ej10_Spring_MVC_EjemploPedidos\src\main\java
+D:\JAVA\workspaces\SPRING\ws_spring_2022\.metadata\.plugins\org.eclipse.jst.jsp.core\jspsearch\1444278000.index
+\Ej10_Spring_MVC_Boot_EjemploPedidos\src\main\java

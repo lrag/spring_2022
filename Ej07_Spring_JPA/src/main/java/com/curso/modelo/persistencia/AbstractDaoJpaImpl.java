@@ -8,7 +8,7 @@ import javax.persistence.PersistenceContext;
 public abstract class AbstractDaoJpaImpl<T, k> implements InterfaceDao<T, k>{
 
 	//@Autowired
-	@PersistenceContext
+	@PersistenceContext(name = "bbdd1")
 	protected EntityManager em;
 	
 	@SuppressWarnings("unchecked")
