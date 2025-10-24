@@ -1,0 +1,11 @@
+com\curso\controlador\ListadoClientesController.class
+com\curso\modelo\entidad\Cliente.class
+com\curso\cfg\ConfiguracionMVC.class
+com\curso\controlador\FormularioClientesController.class
+com\curso\modelo\persistencia\RepositorioClientes.class
+com\curso\modelo\negocio\GestorClientes.class
+com\curso\modelo\persistencia_sin_spring_data\RepositorioClientes_.class
+com\curso\oyente\OyenteContexto.class
+com\curso\modelo\persistencia_sin_spring_data\RepositorioClientesJPAImpl.class
+com\curso\cfg\ConfiguracionModelo.class
+com\curso\cfg\AppInitializer.class
