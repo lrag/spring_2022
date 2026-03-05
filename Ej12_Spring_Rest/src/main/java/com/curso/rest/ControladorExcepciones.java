@@ -45,7 +45,8 @@ public class ControladorExcepciones {
 	public ResponseEntity<?> handleNegocioException(NegocioException e) {
 		
 		System.out.println("=NEGOCIO EXCEPCION CAPTURADA EN CONTROLADOR EXCEPCIONES==============================");
-		e.printStackTrace();
+		System.out.println(e.getMessage());
+		//e.printStackTrace();
 		
 		
 		Zasca error = new Zasca("400", "Error de negocio", e.getMessage());
@@ -56,9 +57,9 @@ public class ControladorExcepciones {
 	@ExceptionHandler(Throwable.class)
 	@ResponseBody
 	public ResponseEntity<?> handleException(Throwable e) {
-		
-		System.out.println("=EXCEPCION CAPTURADA EN CONTROLADOR EXCEPCIONES==============================");
-		e.printStackTrace();
+		System.out.println("=THOWABLE CAPTURADO EN CONTROLADOR EXCEPCIONES==============================");
+		System.out.println(e.getMessage());
+		//e.printStackTrace();
 		
 		Zasca error = new Zasca("500", e.getMessage());
 		RespuestaError r = new RespuestaError("500","ERROR", error);

@@ -3,6 +3,7 @@ package com.curso.modelo.persistencia;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 
 public abstract class AbstractDaoJpaImpl<T, k> implements InterfaceDao<T, k>{

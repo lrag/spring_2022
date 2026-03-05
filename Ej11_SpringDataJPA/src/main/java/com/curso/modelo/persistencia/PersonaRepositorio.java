@@ -22,7 +22,7 @@ public interface PersonaRepositorio extends JpaRepository<Persona, Integer>{
 
 	//JPQL 
 	//@Query("select p from Persona p where p.direccion=?1")
-	@Query("select p from Persona where p.direccion=:direccion")
+	@Query("select p from Persona p where p.direccion=:direccion")
 	List<Persona> findByMovida(String direccion);
 	
 	//@Transactional
@@ -48,4 +48,12 @@ public interface PersonaRepositorio extends JpaRepository<Persona, Integer>{
 	List<Persona> findByDireccion_CodigoPostal(String codigoPostal);
 	*/
 
+}
+
+
+
+class Borrar {
+	public static void main(String[] args) {
+		PersonaRepositorio pr = null;
+	}
 }

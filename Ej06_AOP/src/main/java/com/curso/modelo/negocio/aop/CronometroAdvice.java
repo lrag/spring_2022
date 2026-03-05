@@ -45,10 +45,10 @@ public class CronometroAdvice implements MethodInterceptor {
 	
 }
 
-/*
+
 //Si programamos el CronometroAdvice con las interfaces MethodBeforeAdvice y AfterReturningAdvice descubrimos que no es thread safe
 //*y que debemos esmerarnos un poquito más...
- 
+/* 
 @Component
 public class CronometroAdvice implements MethodBeforeAdvice, AfterReturningAdvice {
 

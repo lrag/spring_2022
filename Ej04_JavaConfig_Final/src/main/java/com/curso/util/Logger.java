@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class Logger implements InitializingBean,
                                DisposableBean{
 
+	@Value("fichero.txt")
 	private String nombreFichero;	
 	private BufferedWriter bw;
 	

@@ -2,7 +2,7 @@ package com.curso.modelo.negocio.excepcion;
 
 import com.curso.modelo.entidad.Producto;
 
-public class ExistenciasException extends Exception {
+public class ExistenciasException extends NegocioException {
 
 	private Producto producto;
 	private Integer existenciasSolicitadas;

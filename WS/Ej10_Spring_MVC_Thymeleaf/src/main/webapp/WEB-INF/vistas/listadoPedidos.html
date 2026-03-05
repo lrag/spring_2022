@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta>
+	<title>Thymeleaf</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <script type="application/javascript" src="listadoPedidos.js"></script>
+</head>
+
+<body>
+
+	<div th:replace="fragmentos/cabecera.html"></div>
+	<div th:replace="fragmentos/menu"></div>
+
+    <h3 class="text-center mt-3 mb-3">
+        Listado de pedidos
+    </h3>
+    
+    <div class="row">
+
+        <div class="col-sm-12 offset-sm-0 col-md-8 offset-md-2">
+
+            <div class="text-center">
+                <input type="button" id="btnNuevo" class="btn btn-primary" value="Nuevo"/>
+            </div>
+
+            <br/>
+
+            <table class="table table-hover table-striped">    
+                <thead>
+                    <tr>
+						<th>Codigo</th>
+						<th>Cliente</th>
+						<th>Fecha</th>
+						<th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+					<tr th:each="pedido: ${listaPedidos}">
+						<td>
+							<a th:href="@{seleccionarPedido(id=${pedido.id})}" th:text="${pedido.codigo}"></a>
+						</td>			
+						<td th:text="${pedido.cliente.nombre}"/>			
+						<td th:text="${pedido.fecha}"/>			
+						<td th:text="${pedido.estado}"/>			
+					</tr>                
+                </tbody>
+            </table>            
+
+        </div>
+
+    </div>
+
+</body>
+</html>

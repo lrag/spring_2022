@@ -3,7 +3,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 
 import com.curso.cfg.Configuracion;
 import com.curso.modelo.entidad.Pelicula;
-import com.curso.modelo.negocio.GestorPeliculas;
+import com.curso.modelo.negocio.ServicioPeliculas;
 
 public class Pruebas {
 
@@ -12,7 +12,7 @@ public class Pruebas {
 		
 		System.out.println("===================================");
 		
-		GestorPeliculas gp =  appCtx.getBean(GestorPeliculas.class);
+		ServicioPeliculas gp =  appCtx.getBean(ServicioPeliculas.class);
 		Pelicula p1 = new Pelicula(null, "Titulo", "Genero");
 		gp.insertar(p1);
 

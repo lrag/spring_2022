@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.Validator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,9 +62,18 @@ public class ClientesRest_Sin_Exception_Handlers {
 	/*
 	POST /cientes
 	Content-type : application/json
-	//Accept: application/firrumbio
+	Accept: application/json
 	-------------------------------
-	{ cliente }
+	{ cliente }	
+	
+	201 CREATED
+	CT: app/json
+	-------------------------------
+	{ clienteInsertado }
+	
+	400 BAD REQUEST
+	
+	500 INTERNAL SERVER ERROR
 	
 	*/	
 	@PostMapping(
@@ -86,8 +96,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 			e.printStackTrace();
 			Zasca error = new Zasca("400", e.getMessage());
 			RespuestaError r = new RespuestaError("400","ERROR", error);
-			return new ResponseEntity<>(r, HttpStatus.BAD_REQUEST);			
-			
+			return new ResponseEntity<>(r, HttpStatus.BAD_REQUEST);	
 		} catch (Exception e) {
 			e.printStackTrace();			
 			Zasca error = new Zasca("500", e.getMessage());
@@ -98,6 +107,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 		Data data = new Data("Cliente insertado", new ClienteDto(cliente));
 		RespuestaOk r = new RespuestaOk("201","SUCCESS", data);
 		return new ResponseEntity<>(r, HttpStatus.CREATED);		
+		
 	}
 	
 	/*

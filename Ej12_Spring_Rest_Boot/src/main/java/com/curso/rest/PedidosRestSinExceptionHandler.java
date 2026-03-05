@@ -4,10 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.curso.modelo.entidad.Pedido;
 import com.curso.modelo.negocio.GestorPedidos;
 import com.curso.rest.dto.PedidoDto;
+
+import jakarta.validation.Valid;
 
 //@Controller
 //@RestController
@@ -81,13 +78,14 @@ public class PedidosRestSinExceptionHandler {
 	
 	@PostMapping(consumes = MimeTypeUtils.APPLICATION_JSON_VALUE,
 				 produces = MimeTypeUtils.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> insertar(@Valid @RequestBody PedidoDto pedidoDto, BindingResult br) {
+	public ResponseEntity<?> insertar(@Valid() @RequestBody() PedidoDto pedidoDto, BindingResult br) {
 
 		if(br.hasErrors()) {
-			Map<String, String> errores = br.getFieldErrors()
+			Map<String, String> errores = 
+				br.getFieldErrors()
 					.stream()
-					.collect(Collectors.toMap( fe -> (String) fe.getField(), 
-								               fe -> (String) fe.getDefaultMessage()));
+						.collect(Collectors.toMap( fe -> (String) fe.getField(), 
+								                   fe -> (String) fe.getDefaultMessage()));
 			return new ResponseEntity<Object>(errores, HttpStatus.BAD_REQUEST);		
 		}
 		
@@ -104,10 +102,11 @@ public class PedidosRestSinExceptionHandler {
 			                           BindingResult br) {
 
 		if(br.hasErrors()) {
-			Map<String, String> errores = br.getFieldErrors()
+			Map<String, String> errores = 
+				br.getFieldErrors()
 					.stream()
-					.collect(Collectors.toMap( fe -> (String) fe.getField(), 
-							                   fe -> (String) fe.getDefaultMessage()));
+						.collect(Collectors.toMap( fe -> (String) fe.getField(), 
+								                   fe -> (String) fe.getDefaultMessage()));
 			return new ResponseEntity<Object>(errores, HttpStatus.BAD_REQUEST);		
 		}		
 		

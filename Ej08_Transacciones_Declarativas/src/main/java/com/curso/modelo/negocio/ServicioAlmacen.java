@@ -40,7 +40,7 @@ public class ServicioAlmacen {
 		
 		producto = productoDao.buscar(producto.getId());		
 		producto.setExistencias(producto.getExistencias()-cantidad);
-		//productoDao.modificar(producto);
+		productoDao.modificar(producto);
 	}	
 	
 }

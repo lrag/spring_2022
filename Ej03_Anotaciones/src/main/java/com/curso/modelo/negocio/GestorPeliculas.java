@@ -1,6 +1,7 @@
 package com.curso.modelo.negocio;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.curso.modelo.entidad.Pelicula;
@@ -42,6 +43,14 @@ public class GestorPeliculas {
 <bean id="gestorPeliculas" class="com.curso.modelo.negocio.GestorPeliculas" scope="singleton">
 	<property name="peliculaDao" ref="peliculaDao"/>
 <bean>
+*/
+
+
+/*
+Nombre de la receta: gestorPeliculas
+Clase: com.curso.modelo.negocio.GestorPeliculas
+Scope: SINGLETON
+
 */
 
 @Service

@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -38,7 +42,7 @@ PUT    /clientes/id
 DELETE /clientes/id
 */
 
-@RestController
+//@RestController
 @RequestMapping(
 		path = "/clientes",
 		produces = { "application/json", "application/xml" }
@@ -50,6 +54,11 @@ public class ClientesRest {
 	public ClientesRest(GestorClientes gestorClientes) {
 		super();
 		this.gestorClientes = gestorClientes;
+	}
+	
+	@GetMapping(path = "/padilla")
+	public String x(HttpServletRequest request, HttpServletResponse response, HttpSession sesion, ServletContext svCtx, HttpServletRequest request2) {
+		return "TOCOTO";
 	}
 	
 	@PostMapping(

@@ -16,12 +16,12 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@ComponentScan(basePackages="com.curso.modelo")
+@ComponentScan( basePackages= "com.curso.modelo" )
 @EnableTransactionManagement
 public class Configuracion {
 
 	@Bean
-	public DataSource dataSource() {
+	DataSource dataSource() {
 		DriverManagerDataSource ds = new DriverManagerDataSource();
 		ds.setDriverClassName("org.h2.Driver");
 		ds.setUrl("jdbc:h2:file:c:/h2/bbdd_movidas_2");

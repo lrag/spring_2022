@@ -1,22 +1,30 @@
 package com.curso.rest.dto;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import com.curso.modelo.entidad.Cliente;
 
-@XmlRootElement
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "Cliente", description = "Objeto de transferencia de datos que representa a un Cliente")
 public class ClienteDto {
 
+	@Schema(description = "Identificador único del cliente", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
 	private Integer id;
+
 	@NotEmpty
+	@Schema(description = "Nombre completo del cliente", example = "Juan Pérez", requiredMode = Schema.RequiredMode.REQUIRED)
 	private String nombre;
+
 	@NotEmpty
+	@Schema(description = "Dirección postal de residencia", example = "Calle Falsa, 123, Pitiegua", requiredMode = Schema.RequiredMode.REQUIRED)
 	private String direccion;
+
 	@NotEmpty
+	@Schema(description = "Número de teléfono de contacto", example = "+34 123 456 789", requiredMode = Schema.RequiredMode.REQUIRED)
 	private String telefono;
-	//Esto no estaría en el dto	
+
+	@Schema(description = "Número de tarjeta de crédito (Opcional)", example = "123456789", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
 	private Integer numeroTC;
 
 	public ClienteDto() {

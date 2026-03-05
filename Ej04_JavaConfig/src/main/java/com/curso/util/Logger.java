@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class Logger implements InitializingBean,
                                DisposableBean{
 	
-	private String nombreFichero = "";
+	private String nombreFichero;
 	private BufferedWriter bw;
 	
 	public Logger() {
