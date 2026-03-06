@@ -1,4 +1,4 @@
-package modelo;
+package com.curso.modelo.entidad;
 
 public class Casa extends AbstractBean {
 

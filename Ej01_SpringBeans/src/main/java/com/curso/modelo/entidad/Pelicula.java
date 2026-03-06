@@ -14,7 +14,7 @@ public class Pelicula {
 
 	public Pelicula() {
 		super();
-		System.out.println("Creando una película");
+		System.out.println("Creando una pelï¿½cula");
 	}
 
 	public Pelicula(Integer id, String titulo, Director director, String genero) {

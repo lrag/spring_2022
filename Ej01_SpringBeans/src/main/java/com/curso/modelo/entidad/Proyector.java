@@ -1,4 +1,4 @@
-package modelo;
+package com.curso.modelo.entidad;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;

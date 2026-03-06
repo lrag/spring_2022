@@ -1,4 +1,4 @@
-package modelo;
+package com.curso.modelo.entidad;
 
 public class Singleton {
 	
@@ -6,7 +6,7 @@ public class Singleton {
 	
 	private Singleton()
 	{
-		System.out.println("Creando el Singletón.");
+		System.out.println("Creando el Singletï¿½n.");
 	}
 
 	public static Singleton getInstancia()

@@ -1,4 +1,4 @@
-package modelo;
+package com.curso.modelo.entidad;
 
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;

@@ -1,4 +1,4 @@
-package modelo;
+package com.curso.modelo.entidad;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,7 +8,7 @@ import javax.sql.DataSource;
 //No hagais esto en casa.
 public class ProductoDao {
 
-	//Los daos NO deben tener una conexión.
+	//Los daos NO deben tener una conexiï¿½n.
 	private Connection cx;
 	private DataSource ds;
 	
@@ -24,7 +24,7 @@ public class ProductoDao {
 
 	public void init()
 	{
-		System.out.println(":::Obteniendo una conexión en ProductoDao.");
+		System.out.println(":::Obteniendo una conexiï¿½n en ProductoDao.");
 		try {
 			cx = ds.getConnection();
 		} catch (SQLException e) {
@@ -40,7 +40,7 @@ public class ProductoDao {
 	
 	public void destroy()
 	{
-		System.out.println(":::Cerrando la conexión en ProductoDao.");
+		System.out.println(":::Cerrando la conexiï¿½n en ProductoDao.");
 		try {
 			cx.close();
 		} catch (SQLException e) {
