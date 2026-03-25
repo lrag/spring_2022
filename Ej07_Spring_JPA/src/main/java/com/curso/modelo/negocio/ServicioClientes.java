@@ -10,12 +10,23 @@ import org.springframework.stereotype.Service;
 import com.curso.modelo.entidad.Cliente;
 import com.curso.modelo.persistencia.ClienteDao;
 
+
+/*
+<bean id="servicioClientes" class="com.curso.SPM.ServicioClientes" scope="singletón">
+	<contructor-arg ref="clienteDao"/>
+</bean>
+*/
+
 @Service
 public class ServicioClientes {
 
-	@Autowired
 	private ClienteDao clienteDao;
 	
+	public ServicioClientes(ClienteDao clienteDao) {
+		super();
+		this.clienteDao = clienteDao;
+	}
+
 	@Transactional
 	public void insertar(Cliente cliente) {
 		//LN...

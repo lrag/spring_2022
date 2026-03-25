@@ -41,7 +41,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 //
 //
 
-@RestController
+//@RestController
 @RequestMapping(
 		path = "/clientes",
 		produces = { "application/json", "application/xml" }

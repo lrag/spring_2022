@@ -1,9 +1,14 @@
 package com.curso.controlador;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.curso.modelo.entidad.Cliente;
 import com.curso.modelo.persistencia.RepositorioClientes;
 
 //Spring creará una instancia de esta clase
@@ -26,6 +31,13 @@ public class ListadoClientesController {
 		ModelAndView mav = new ModelAndView("listadoClientes");
 		mav.addObject("listaClientes", repositorioClientes.findAll());
 		return mav;
-	}	
+	}
+	
+	@GetMapping(path = "/clientes")
+	@ResponseBody
+	public List<Cliente> listarClientes(){
+		return repositorioClientes.findAll();		
+	}
+	
 	
 }

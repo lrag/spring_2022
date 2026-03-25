@@ -1,7 +1,6 @@
 package com.curso.rest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
@@ -12,16 +11,14 @@ import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.curso.modelo.entidad.Cliente;
@@ -42,7 +39,7 @@ PUT    /clientes/id
 DELETE /clientes/id
 */
 
-//@RestController
+@RestController
 @RequestMapping(
 		path = "/clientes",
 		produces = { "application/json", "application/xml" }
@@ -54,6 +51,12 @@ public class ClientesRest {
 	public ClientesRest(GestorClientes gestorClientes) {
 		super();
 		this.gestorClientes = gestorClientes;
+	}
+	
+	//Para HEAD, OPTIONS y TRACE no hay anotación específica 
+	@RequestMapping(value = "/{id}", method = RequestMethod.HEAD)
+	public void HEAD() {
+		
 	}
 	
 	@GetMapping(path = "/padilla")
@@ -73,7 +76,7 @@ public class ClientesRest {
 		RespuestaOk r = new RespuestaOk("201","SUCCESS", data);
 		return new ResponseEntity<>(r, HttpStatus.CREATED);		
 	}
-	
+
 	@PutMapping( 
 			path = "/{id}",
 			consumes = { "application/json", "application/xml" }
