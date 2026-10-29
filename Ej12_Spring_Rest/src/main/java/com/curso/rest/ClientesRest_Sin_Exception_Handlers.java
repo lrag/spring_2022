@@ -1,10 +1,8 @@
 package com.curso.rest;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.validation.Valid;
-import javax.validation.Validator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.curso.modelo.entidad.Cliente;
-import com.curso.modelo.negocio.GestorClientes;
+import com.curso.modelo.negocio.ServicioClientes;
 import com.curso.modelo.negocio.excepcion.ClienteException;
 import com.curso.rest.dto.ClienteDto;
 import com.curso.rest.dto.Data;
@@ -27,6 +25,12 @@ import com.curso.rest.dto.Respuesta;
 import com.curso.rest.dto.RespuestaError;
 import com.curso.rest.dto.RespuestaOk;
 import com.curso.rest.dto.Zasca;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 /*
 GET    /clientes
@@ -36,7 +40,6 @@ PUT    /clientes/id
 DELETE /clientes/id
 */
 
-
 //@Controller
 //@RestController
 @RequestMapping(
@@ -45,21 +48,19 @@ DELETE /clientes/id
 	)
 public class ClientesRest_Sin_Exception_Handlers {
 	
-	private GestorClientes gestorClientes;
+	private ServicioClientes servicioClientes;
 	
-	public ClientesRest_Sin_Exception_Handlers(GestorClientes gestorClientes) {
+	public ClientesRest_Sin_Exception_Handlers(ServicioClientes servicioClientes) {
 		super();
-		this.gestorClientes = gestorClientes;
+		this.servicioClientes = servicioClientes;
 	}
-	
+
 	/*
 	@RequestMapping(
 			method = RequestMethod.POST,
 			path = "/clientes"
 		)
-	*/
-
-	/*
+		
 	POST /cientes
 	Content-type : application/json
 	Accept: application/json
@@ -83,6 +84,15 @@ public class ClientesRest_Sin_Exception_Handlers {
 	//@ResponseBody
 	public ResponseEntity<Respuesta> insertar(@Valid @RequestBody ClienteDto clienteDto, BindingResult result) {
 		
+		/*Validación a manubrio
+		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+		Validator validator = factory.getValidator();
+		Set<ConstraintViolation<ClienteDto>> violations = validator.validate(clienteDto);
+		for (ConstraintViolation<ClienteDto> violation : violations) {
+		    System.out.println(violation.getMessage()); 
+		}
+		*/		
+		
 		if(result.hasErrors()) {
 			Zasca error = new Zasca("400", "Datos inválidos");
 			RespuestaError r = new RespuestaError("400","ERROR", error);
@@ -91,7 +101,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 		
 		Cliente cliente = clienteDto.asCliente();
 		try {
-			gestorClientes.insertar(cliente);
+			servicioClientes.insertar(cliente);
 		} catch (ClienteException e) {
 			e.printStackTrace();
 			Zasca error = new Zasca("400", e.getMessage());
@@ -106,15 +116,18 @@ public class ClientesRest_Sin_Exception_Handlers {
 		
 		Data data = new Data("Cliente insertado", new ClienteDto(cliente));
 		RespuestaOk r = new RespuestaOk("201","SUCCESS", data);
-		return new ResponseEntity<>(r, HttpStatus.CREATED);		
-		
+		return new ResponseEntity<>(r, HttpStatus.CREATED);			
 	}
 	
 	/*
 	PUT /cientes/{id}
 	Content-type : application/json
 	-----------------
-	{ cliente }
+	{  
+		id: 5
+		nombre
+		direccion...	
+	}
 	
 	public void modificar(HttpServletRequest request, HttpServletResponse response, HttpSession sesion, ServletContext svCtx) {
     */
@@ -122,7 +135,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 			path = "/{id}",
 			consumes = { "application/json", "application/xml" }
 		)
-	public ResponseEntity<Respuesta> modificar(@PathVariable Integer id, @Valid @RequestBody ClienteDto clienteDto, BindingResult result) {
+	public ResponseEntity<Respuesta> modificar(@PathVariable("id") Integer id, @Valid @RequestBody ClienteDto clienteDto, BindingResult result) {
 		
 		if(result.hasErrors()) {
 			Zasca error = new Zasca("400", "Datos inválidos");
@@ -134,7 +147,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 		cliente.setId(id);
 		
 		try {
-			gestorClientes.modificar(cliente);
+			servicioClientes.modificar(cliente);
 		} catch (ClienteException e) {
 			e.printStackTrace();
 			Zasca error = new Zasca("400", e.getMessage());
@@ -154,13 +167,13 @@ public class ClientesRest_Sin_Exception_Handlers {
 	}	
 	
 	@DeleteMapping( path = "/{id}")
-	public void borrar(@PathVariable Integer id) {
+	public void borrar(@PathVariable("id") Integer id) {
 		int a = 10 / 0;
 	}
 	
 	@GetMapping( path = "/{id}")
-	public ResponseEntity<Respuesta> buscar(@PathVariable Integer id) {
-		Cliente cliente = gestorClientes.buscar(id);
+	public ResponseEntity<Respuesta> buscar(@PathVariable("id") Integer id) {
+		Cliente cliente = servicioClientes.buscar(id);
 		if(cliente == null) {
 			Zasca error = new Zasca("404", "El cliente "+id+" no existe.");
 			RespuestaError r = new RespuestaError("404","ERROR", error);
@@ -174,8 +187,7 @@ public class ClientesRest_Sin_Exception_Handlers {
 	
 	@GetMapping
 	public ResponseEntity<Respuesta> listar() {
-		
-		List<ClienteDto> clientesDto = gestorClientes.listar()
+		List<ClienteDto> clientesDto = servicioClientes.listar()
 				.stream()
 				.map(c -> new ClienteDto(c))
 				.collect(Collectors.toList());
@@ -187,3 +199,10 @@ public class ClientesRest_Sin_Exception_Handlers {
 	}
 	
 }
+
+
+
+
+
+
+

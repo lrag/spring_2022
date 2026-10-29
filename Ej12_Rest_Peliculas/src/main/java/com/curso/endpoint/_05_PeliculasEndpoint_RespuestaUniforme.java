@@ -1,0 +1,110 @@
+package com.curso.endpoint;
+
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.curso.endpoint.dto.Data;
+import com.curso.endpoint.dto.PeliculaDTO;
+import com.curso.endpoint.dto.RespuestaOk;
+import com.curso.modelo.negocio.adapter.ServicioPeliculasAdapter;
+import com.curso.modelo.negocio.excepcion.PeliculaException;
+import com.curso.modelo.negocio.excepcion.RecursoNoExistenteException;
+
+import jakarta.validation.Valid;
+
+@RequestMapping( 
+		path = "/peliculas",
+		produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+	)
+//@RestController
+public class _05_PeliculasEndpoint_RespuestaUniforme {
+
+	/*
+	GET 	/peliculas		
+	GET 	/peliculas/{id}
+	POST 	/peliculas
+	PUT 	/peliculas/{id}
+	DELETE 	/peliculas/{id}
+	*/
+	
+	private ServicioPeliculasAdapter servicioPeliculas;
+	
+	public _05_PeliculasEndpoint_RespuestaUniforme(ServicioPeliculasAdapter servicioPeliculas) {
+		super();
+		this.servicioPeliculas = servicioPeliculas;
+	}
+
+	@PostMapping(
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+		)
+	public ResponseEntity<?> insertar(@Valid @RequestBody PeliculaDTO pelicula) throws PeliculaException {	
+		PeliculaDTO peliculaInsertada = servicioPeliculas.insertar(pelicula);
+		Data data = new Data("Película insertada", peliculaInsertada);
+		RespuestaOk respuesta = new RespuestaOk("201", "CREATED", data);
+		return new ResponseEntity<RespuestaOk>(respuesta, HttpStatus.CREATED);
+	}
+	
+	@PutMapping( 
+			path = "/{id}",
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+		)
+	public ResponseEntity<?> modificar(@Valid @RequestBody PeliculaDTO pelicula, @PathVariable Integer id) {
+		//PeliculaDTO peliculaModificada = servicioPeliculas.modificar(pelicula);
+		//Data data = new Data("Película modificada", peliculaModificada);
+		//RespuestaOk respuesta = new RespuestaOk("200", "OK", data);
+		//return new ResponseEntity<RespuestaOk>(respuesta, HttpStatus.OK);
+		return null;
+	}
+	
+	@DeleteMapping
+	public void borrar() {			
+	}
+	
+	@GetMapping(
+		)
+	public ResponseEntity<RespuestaOk> listar(@RequestParam(required = false) String genero) {	
+		System.out.println("Listar peliculas. Genero="+genero);
+		List<PeliculaDTO> peliculas = servicioPeliculas.listar(genero);
+		Data data = new Data("Listado de películas", peliculas);
+		RespuestaOk respuesta = new RespuestaOk("200", "OK", data);
+		return new ResponseEntity<RespuestaOk>(respuesta, HttpStatus.OK);
+	}
+	
+	@GetMapping(
+			path = "/{id}"
+		)
+	public ResponseEntity<RespuestaOk> buscar(@PathVariable Integer id) throws RecursoNoExistenteException {	
+		PeliculaDTO pelicula = servicioPeliculas.buscarPorId(id);
+		Data data = new Data("Pelicula encontrada", pelicula);
+		RespuestaOk respuesta = new RespuestaOk("200", "OK", data);
+		return new ResponseEntity<RespuestaOk>(respuesta, HttpStatus.OK);
+	}	
+	
+	//
+	// Si en todos los RestControler vamos a controlar así
+	// los errores de validación lo mejor es dar de alta
+	// este exception handler en un @ControlerAdvice
+	//
+	/*
+	@ExceptionHandler(Throwable.class)
+	@ResponseBody
+	public ResponseEntity<?> handleValidationException(Throwable e) {
+		return new ResponseEntity<Object>("HUBO UN ERROR, ADIVINA TU CUAL ES", HttpStatus.BAD_REQUEST);		
+	}
+	*/
+	
+	
+}

@@ -1,0 +1,1132 @@
+= HTTP y APIs REST
+Luis Ramón <luis.ramon.alvarez@pronoide.com>
+:doctype: article
+:lang: es
+:toc: left
+:toclevels: 3
+:toc-title: Índice
+:sectnums:
+:source-highlighter: highlight.js
+:icons: font
+:experimental:
+
+[abstract]
+Apuntes sobre el protocolo HTTP y sobre cómo diseñar una API REST: qué es un recurso, cómo se representa, cómo se organiza en rutas y cómo se asocian las operaciones de negocio a pares _método + ruta_.
+
+== El protocolo HTTP
+
+=== Características generales
+
+HTTP (_HyperText Transfer Protocol_) es un protocolo pensado para conectar aplicaciones cualesquiera entre sí. Nació para servir páginas web, pero hoy es el pegamento universal entre navegadores, aplicaciones móviles, microservicios y cualquier cosa que necesite hablar con otra cosa a través de una red.
+
+Sus rasgos más importantes son:
+
+Protocolo de texto::
+Los mensajes son legibles por una persona. Se puede escribir una petición a mano con `telnet` o `netcat` y entender la respuesta a simple vista. Esto facilita enormemente la depuración.
+
+Mensajes de estructura muy simple::
+Todo mensaje (petición o respuesta) tiene dos partes: una *cabecera* (HEAD) y un *cuerpo* (BODY), separadas por una línea en blanco (`CR LF CR LF`, es decir, `\r\n\r\n`).
+
+Orientado a conexión::
+HTTP se apoya en un protocolo de transporte fiable, normalmente TCP (o QUIC en HTTP/3). Antes de intercambiar mensajes se establece una conexión entre cliente y servidor.
+
+Sin estado (_stateless_)::
+El servidor *no recuerda* nada entre una petición y la siguiente. Cada petición debe contener toda la información necesaria para ser entendida y atendida. Si hace falta mantener contexto (una sesión de usuario, un carrito de la compra), debe viajar en la propia petición (cookies, tokens, identificadores...).
+
+=== Estructura de un mensaje
+
+[source,http]
+----
+LÍNEA INICIAL                 <1>
+Cabecera-1: valor             <2>
+Cabecera-2: valor
+                              <3>
+CUERPO (opcional)             <4>
+----
+<1> En una petición: método, ruta y versión (`GET /index.html HTTP/1.1`). En una respuesta: versión y código de estado (`HTTP/1.1 200 OK`).
+<2> Cabeceras: pares `nombre: valor` con metadatos (tipo de contenido, formato aceptado, longitud...).
+<3> Línea en blanco que marca el final de la cabecera.
+<4> El cuerpo: HTML, JSON, una imagen, etc. No todos los mensajes lo llevan.
+
+=== Los métodos HTTP
+
+El método indica *qué quiere hacer* el cliente con el recurso identificado por la ruta.
+
+[cols="1,3,1,1", options="header"]
+|===
+| Método | Uso habitual | ¿Lleva cuerpo la petición? | ¿Idempotente?
+
+| `GET`
+| Obtener un recurso o una colección de recursos.
+| No
+| Sí
+
+| `POST`
+| Crear un recurso nuevo o ejecutar una operación que no encaja en los demás métodos.
+| Sí
+| No
+
+| `PUT`
+| Reemplazar completamente un recurso.
+| Sí
+| Sí
+
+| `PATCH`
+| Modificar parcialmente un recurso.
+| Sí
+| No necesariamente
+
+| `DELETE`
+| Eliminar un recurso.
+| Normalmente no
+| Sí
+
+| `QUERY`
+| Como `GET`, pero permitiendo enviar un cuerpo con criterios de búsqueda complejos.
+| Sí
+| Sí
+|===
+
+Además existen dos métodos de uso más "técnico":
+
+[cols="1,4", options="header"]
+|===
+| Método | Uso
+
+| `OPTIONS`
+| Preguntar al servidor qué métodos y opciones admite para una ruta. Es el que usan los navegadores en las peticiones _preflight_ de CORS.
+
+| `HEAD`
+| Idéntico a `GET`, pero el servidor responde *solo con la cabecera*, sin cuerpo. Sirve para comprobar si un recurso existe, su tipo o su tamaño sin descargarlo.
+|===
+
+[NOTE]
+====
+`QUERY` es un método que está en proceso de estandarización en el IETF. Resuelve un problema real: cuando los criterios de filtrado son tan complejos que no caben en la URL, hoy se acaba usando `POST` para buscar, lo cual es semánticamente incorrecto (un `POST` no es seguro ni idempotente). Por ahora: *próximamente*, y tardará todavía en estar disponible de forma generalizada en servidores, proxies y librerías.
+====
+
+==== Seguridad e idempotencia
+
+Dos propiedades que conviene tener claras:
+
+* Un método es *seguro* si no modifica el estado del servidor (`GET`, `HEAD`, `OPTIONS`, `QUERY`).
+* Un método es *idempotente* si repetir la misma petición varias veces deja el servidor en el mismo estado que si se hubiera hecho una sola vez (`GET`, `PUT`, `DELETE`, `HEAD`, `OPTIONS`). Borrar dos veces el cliente 15 deja el sistema igual que borrarlo una. Hacer dos `POST` de creación, en cambio, crea dos recursos.
+
+=== HTTP como servidor de ficheros
+
+El modelo original de HTTP es el de un servidor de *ficheros* organizados en carpetas. Imaginemos que el servidor expone el directorio `/www`:
+
+[source]
+----
+/www
+├── index.html
+├── inicio.html
+│
+├── paginas
+│   ├── pagina1.html
+│   └── pagina2.html
+│
+└── imagenes
+    ├── logo.jpg
+    └── movida.jpg
+----
+
+La *ruta* de la petición indica qué fichero (o carpeta) se pide:
+
+[source,http]
+----
+GET /index.html
+GET /paginas/pagina1.html
+GET /imagenes/logo.jpg
+----
+
+Si la ruta apunta a una carpeta, se obtiene un listado de su contenido (o la página por defecto, según la configuración del servidor):
+
+[source,http]
+----
+GET /paginas
+----
+
+Esta idea de "rutas como carpetas" es la que, más adelante, REST generalizará: las carpetas ya no serán directorios del disco, sino *colecciones de recursos*.
+
+=== Query parameters
+
+Los _query parameters_ (lo que va tras el `?` en la URL) existen para *filtrar* los recursos identificados por la ruta. La ruta dice _qué colección_; los parámetros dicen _qué elementos de esa colección_.
+
+[source,http]
+----
+GET /peliculas?genero=accion
+----
+
+Es decir: "dame las películas, pero solo las de género acción". Se pueden combinar varios con `&`:
+
+[source,http]
+----
+GET /peliculas?genero=accion&anio=1999
+----
+
+=== Peticiones y respuestas en detalle
+
+==== GET
+
+Petición de un recurso que existe:
+
+[source,http]
+----
+GET /paginas/pagina1.html
+----
+
+Respuesta:
+
+[source,http]
+----
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<HTML>
+  ...
+</HTML>
+----
+
+Petición de un recurso que *no* existe:
+
+[source,http]
+----
+GET /paginas/pagina3.html
+----
+
+Respuesta:
+
+[source,http]
+----
+HTTP/1.1 404 Not Found
+----
+
+==== HEAD
+
+`HEAD` funciona igual que `GET` pero *sin cuerpo en la respuesta*. Solo vuelve la cabecera.
+
+[source,http]
+----
+HEAD /paginas/pagina1.html
+----
+
+[source,http]
+----
+HTTP/1.1 200 OK
+Content-Type: text/html
+----
+
+Y si el recurso no existe:
+
+[source,http]
+----
+HEAD /paginas/pagina3.html
+----
+
+[source,http]
+----
+HTTP/1.1 404 Not Found
+----
+
+Es la forma barata de preguntar "¿existe esto? ¿de qué tipo es?" sin pagar el coste de transferir todo el contenido.
+
+=== Códigos de estado
+
+La respuesta siempre lleva un código numérico que resume el resultado. Se agrupan por centenas:
+
+[cols="1,3,3", options="header"]
+|===
+| Rango | Significado | Ejemplos
+
+| `1xx` | Informativo | `100 Continue`
+| `2xx` | Éxito | `200 OK`, `201 Created`, `204 No Content`
+| `3xx` | Redirección | `301 Moved Permanently`, `304 Not Modified`
+| `4xx` | Error del cliente | `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`
+| `5xx` | Error del servidor | `500 Internal Server Error`, `503 Service Unavailable`
+|===
+
+=== Diferencia entre PUT y PATCH
+
+Ambos se usan para modificar un recurso existente, y ambos pueden llevar exactamente el mismo cuerpo. *Lo que cambia es la semántica*.
+
+[source,http]
+----
+PUT /clientes/15
+Content-Type: application/json
+
+{
+  "direccion": "nueva dirección"
+}
+----
+
+[source,http]
+----
+PATCH /clientes/15
+Content-Type: application/json
+
+{
+  "direccion": "nueva dirección"
+}
+----
+
+`PUT`:: Significa "*sustituye* el recurso `/clientes/15` por esto que te envío". El cuerpo debe contener la representación *completa*. Con la petición anterior, el cliente 15 pasaría a tener únicamente una dirección: el nombre, el teléfono y el resto de campos quedarían vacíos o desaparecerían, porque no venían en el cuerpo.
+
+`PATCH`:: Significa "*aplica este cambio* al recurso `/clientes/15`". El cuerpo describe solo lo que cambia. Con la misma petición, el cliente conservaría su nombre y su teléfono, y solo se modificaría la dirección.
+
+Para actualizar un solo campo, lo correcto es `PATCH`. Para `PUT`, habría que enviar el recurso entero:
+
+[source,http]
+----
+PUT /clientes/15
+Content-Type: application/json
+
+{
+  "nombre": "Ringo Starr",
+  "direccion": "nueva dirección",
+  "telefono": "555123456"
+}
+----
+
+=== Negociación de contenido: formatos
+
+Un mismo recurso puede representarse en distintos *formatos*. El cliente indica cuál prefiere mediante la cabecera `Accept`, y el servidor indica cuál ha usado en la respuesta con `Content-Type`.
+
+[source,http]
+----
+GET /clientes
+Accept: application/xml
+----
+
+Respuesta en XML:
+
+[source,xml]
+----
+<clientes>
+  <cliente>
+    <nombre>AAA</nombre>
+    <direccion>BBB</direccion>
+    <telefono>CCC</telefono>
+  </cliente>
+  <cliente>
+    <nombre>AAA</nombre>
+    <direccion>BBB</direccion>
+    <telefono>CCC</telefono>
+  </cliente>
+  <cliente>
+    <nombre>AAA</nombre>
+    <direccion>BBB</direccion>
+    <telefono>CCC</telefono>
+  </cliente>
+</clientes>
+----
+
+La misma información en JSON (`Accept: application/json`):
+
+[source,json]
+----
+[
+  {
+    "nombre": "AAA",
+    "direccion": "BBB",
+    "telefono": "CCC"
+  },
+  {
+    "nombre": "AAA",
+    "direccion": "BBB",
+    "telefono": "CCC"
+  },
+  {
+    "nombre": "AAA",
+    "direccion": "BBB",
+    "telefono": "CCC"
+  }
+]
+----
+
+Observa que el contenido *es el mismo*; solo cambia el formato en que se escribe. JSON es más compacto y es hoy el formato dominante en APIs; XML es más verboso pero sigue siendo habitual en entornos corporativos.
+
+Las dos cabeceras clave son:
+
+[cols="1,3", options="header"]
+|===
+| Cabecera | Significado
+
+| `Content-Type`
+| Formato del *cuerpo del mensaje que se envía* (en una petición, el de lo que mando; en una respuesta, el de lo que devuelvo).
+
+| `Accept`
+| Formato(s) en que el cliente *desea recibir* la respuesta.
+|===
+
+== REST
+
+REST significa *_Representational State Transfer_* (transferencia de estado representacional). Es un *estilo de arquitectura* descrito por Roy Thomas Fielding en su tesis doctoral (2000). No es un protocolo ni un estándar: es un conjunto de principios para diseñar APIs sobre HTTP aprovechando lo que HTTP ya ofrece (rutas, métodos, códigos de estado, cabeceras).
+
+La idea central es esta: una API REST expone *recursos*, cada uno identificado por una ruta, y los clientes los manipulan intercambiando *representaciones* de su estado.
+
+Un método práctico de diseño sigue cuatro pasos.
+
+=== Paso 1: identificar los recursos
+
+Un recurso es una "cosa" con entidad propia en el dominio del problema: un sustantivo, no un verbo. Se pregunta uno: _¿qué entidades maneja este sistema?_
+
+.Ejemplo: IMDB
+* películas
+* actores
+* directores
+* series
+* capítulos
+* calificaciones
+* categorías
+
+.Ejemplo: comercio electrónico
+* productos
+* clientes
+* órdenes de compra
+* albaranes
+* facturas
+
+=== Paso 2: decidir una representación de los recursos
+
+Hay que decidir qué información contiene cada recurso: sus atributos y sus relaciones con otros recursos. *Todavía no se habla de XML ni de JSON*; eso es el _formato_ con el que luego se escribirá esa representación. Aquí se decide el _contenido_.
+
+Por ejemplo, para una película:
+
+[source,json]
+----
+{
+  "id": 22,
+  "titulo": "...",
+  "director": { },
+  "genero": "...",
+  "fechaEstreno": "...",
+  "...": "..."
+}
+----
+
+Esto es lo que da nombre a REST: lo que se transfiere entre cliente y servidor es la *representación del estado* del recurso (_Representational State Transfer_). El recurso en sí vive en el servidor; el cliente solo ve (y envía) representaciones suyas.
+
+=== Paso 3: asignar carpetas (rutas) a los recursos
+
+Cada tipo de recurso se publica como una "carpeta" (una *colección*), y cada elemento concreto, como un "fichero" dentro de ella, identificado por su id. Aquí aprovechamos la metáfora del servidor de ficheros vista antes.
+
+[source,http]
+----
+GET /clientes          # la colección completa
+GET /facturas
+GET /peliculas
+
+GET /clientes/15       # un elemento concreto
+GET /facturas/17
+GET /peliculas/22
+----
+
+[WARNING]
+====
+*Las colecciones se nombran en plural.* Es un error escribir `GET /cliente/15`. Se debe escribir `GET /clientes/15`: `/clientes` es la carpeta, y `15` el elemento dentro de ella. Mezclar singular y plural rompe la coherencia de la API y es considerado un anatema por los puristas del estilo, empezando por el propio Fielding.
+====
+
+Y de la misma forma con el borrado:
+
+[source,http]
+----
+DELETE /clientes          # borra toda la colección (¡cuidado!)
+DELETE /facturas
+DELETE /peliculas
+
+DELETE /clientes/15       # borra un elemento
+DELETE /facturas/17
+DELETE /peliculas/22
+----
+
+==== Dónde va el identificador
+
+Un error común es poner el id solo en el cuerpo y dirigir la petición a la colección.
+
+.MAL
+[source,http]
+----
+PUT /clientes
+Content-Type: application/json
+
+{
+  "id": 15,
+  "nombre": "Ringo Starr",
+  "direccion": "C/su calle",
+  "telefono": "555123456"
+}
+----
+
+Aquí el recurso afectado *no está identificado por la ruta*, sino enterrado dentro del cuerpo. En REST, la ruta es la que identifica el recurso. Lo correcto:
+
+.BIEN
+[source,http]
+----
+PUT /clientes/15
+Content-Type: application/json
+
+{
+  "id": 15,
+  "nombre": "Ringo Starr",
+  "direccion": "C/su calle",
+  "telefono": "555123456"
+}
+----
+
+Y para *crear* un recurso nuevo, cuando todavía no tiene id (lo asignará el servidor), la petición va a la colección y el cuerpo no lleva id:
+
+.BIEN (creación)
+[source,http]
+----
+POST /clientes
+Content-Type: application/json
+
+{
+  "nombre": "Ringo Starr",
+  "direccion": "C/su calle",
+  "telefono": "555123456"
+}
+----
+
+[NOTE]
+====
+En las notas originales este último ejemplo aparecía con `PUT`. Lo habitual es usar `POST` para crear en una colección cuando es el servidor quien asigna el id; `PUT` a una ruta con id (`PUT /clientes/15`) se reserva para sustituir/crear un recurso con un id ya conocido por el cliente.
+====
+
+==== Las carpetas expresan relaciones
+
+Las rutas no solo organizan los recursos: pueden *expresar las relaciones* entre ellos. Y un mismo recurso puede aparecer en *varias carpetas* (varias rutas pueden llevar al mismo recurso o a recursos relacionados).
+
+Hay dos maneras equivalentes de pedir "las facturas del cliente 33":
+
+[source,http]
+----
+GET /facturas?idCliente=33           # filtrando con query parameters
+GET /clientes/33/facturas            # navegando por la jerarquía
+----
+
+Los *query parameters* son ideales para filtros ad hoc y combinables:
+
+[source,http]
+----
+GET /facturas                        # todas
+GET /facturas?idCliente=33           # las de un cliente
+GET /facturas?estado=cobrada         # las cobradas
+GET /facturas?idCliente=33&estado=cobrada
+----
+
+Las *subcarpetas* expresan una relación estructural y natural entre recursos. Un caso especialmente claro es el de relaciones muchos a muchos, que pueden recorrerse desde ambos lados:
+
+[source,http]
+----
+# Con query parameters
+GET /actores?idPelicula=15           # actores de la película 15
+GET /peliculas?idActor=15            # películas del actor 15
+
+# Con subcarpetas
+GET /peliculas/15/actores
+GET /actores/15/peliculas
+----
+
+==== Recursos sin vida propia
+
+No todo lo que existe en la base de datos debe ser un recurso REST. Consideremos este modelo:
+
+[source]
+----
+CLIENTE 1..* ORDEN_COMPRA 1..* DETALLE_ORDEN_COMPRA *..1 PRODUCTO
+----
+
+Los recursos "con vida propia" son:
+
+* `clientes`
+* `ordenesDeCompra`
+* `productos`
+
+Los *detalles* de una orden de compra *no* son un recurso independiente: un detalle no tiene sentido fuera de la orden a la que pertenece. Por tanto, esto *no tiene sentido*:
+
+[source,http]
+----
+GET /detallesODC          # ¿los detalles de qué orden?
+GET /detallesODC/15       # ídem
+----
+
+Esto, en cambio, sí:
+
+[source,http]
+----
+GET /ordenesDeCompra/15/detalles
+----
+
+Si se prefiere no usar subcarpetas, la alternativa con query parameters solo es válida si *siempre* va acompañada del id de la orden:
+
+[source,http]
+----
+GET /detallesODC?idODC=15      # tiene sentido SOLO acompañado del id de la ODC
+----
+
+[TIP]
+====
+Regla práctica: si un elemento no puede existir ni consultarse sin su "padre", se modela como *subrecurso* (`/padre/{id}/hijos`) y no como colección de primer nivel.
+====
+
+=== Paso 4: asociar las operaciones a pares método + ruta
+
+Una vez definidos los recursos y sus rutas, cada *operación de negocio* de la aplicación se mapea a una combinación de *método HTTP + ruta*.
+
+Este es el contraste con el estilo *RPC* (_Remote Procedure Call_), donde cada operación es una función con nombre propio (`listarProductos`, `insertarPedido`...). En REST, el *verbo lo pone el método HTTP* y el *sustantivo lo pone la ruta*.
+
+.Recurso `productos`
+[cols="1,2,2", options="header"]
+|===
+| Método y ruta | Operación (estilo RPC) | Significado
+
+| `GET /productos`        | `listarProductos`        | Listar todos los productos
+| `GET /productos/{id}`   | `buscarProductoPorId`    | Obtener un producto
+| `POST /productos`       | `insertarProducto`       | Crear un producto
+| `PUT /productos/{id}`   | `modificarProducto`      | Reemplazar un producto
+| `DELETE /productos/{id}`| `borrarProducto`         | Eliminar un producto
+|===
+
+.Recurso `pedidos`
+[cols="1,2,2", options="header"]
+|===
+| Método y ruta | Operación (estilo RPC) | Significado
+
+| `GET /pedidos`          | `listarPedidos`          | Listar todos los pedidos
+| `GET /pedidos/15`       | `buscarPedidoPorId`      | Obtener el pedido 15
+| `POST /pedidos`         | `insertarPedido`         | Crear un pedido
+| `PUT /pedidos/15`       | `modificarPedido`        | Modificar el pedido 15
+| `DELETE /pedidos/15`    | `borrarPedido`           | Eliminar el pedido 15
+|===
+
+Las operaciones CRUD (crear, leer, actualizar, borrar) encajan de forma natural. El problema aparece con las operaciones que *no son CRUD*, como *facturar un pedido*.
+
+==== El problema: operaciones que no encajan
+
+¿Cómo se expresa "facturar el pedido 15"? Si pudiéramos inventarnos nuestros propios métodos HTTP, escribiríamos algo como:
+
+[source,http]
+----
+FACTURAR /pedidos/15
+----
+
+Pero HTTP tiene un conjunto cerrado de métodos. La solución REST consiste en *pensar en qué recurso del dominio se convierte la acción*. En este negocio, facturar un pedido es *transformarlo en una orden de compra*; y al procesar la orden de compra, se emite la factura.
+
+.Solución: crear una orden de compra a partir del pedido
+[source,http]
+----
+POST /ordenesDeCompra
+Content-Type: application/json
+
+{
+  "idPedido": 15
+}
+----
+
+[source,http]
+----
+HTTP/1.1 201 Created
+Location: /ordenesDeCompra/40
+----
+
+Por qué esta solución:
+
+* Se lee de forma natural como un `POST` de inserción: "toma esta orden de compra (la del pedido 15)". Eso es exactamente lo que el cliente está pidiendo.
+* La orden de compra es un recurso con vida propia en el modelo (`CLIENTE 1..* ORDEN_COMPRA`): se lista, se consulta y se procesa por sí misma.
+* En el cuerpo va *solo el id del pedido*, no el pedido completo en JSON. El servidor ya tiene el pedido, y si el cliente lo mandara entero podría llegar con precios, cantidades o direcciones distintos de los guardados. Con el id no hay ambigüedad: se transforma lo que hay en el sistema.
+* La factura es una *consecuencia* de procesar la orden, y la genera el servidor. Después se puede consultar como cualquier otro recurso, por ejemplo con `GET /facturas?idOrdenCompra=40`.
+
+Alternativas consideradas:
+
+`POST /facturas` con `{ "idPedido": 15 }`:: Funciona, pero "huele" a "toma esta factura", cuando el cliente no envía ninguna factura: la factura la construye el servidor.
+
+`POST /pedidos/15/facturas`:: Válida. La ruta expresa bien la relación entre pedido y factura, pero salta el paso intermedio de la orden de compra que existe en el dominio.
+
+[WARNING]
+====
+`POST` no es idempotente. Si el cliente reintenta tras un corte de red, podría convertir dos veces el mismo pedido. El servidor debe comprobarlo y responder `409 Conflict` si el pedido ya tiene una orden de compra.
+====
+
+.Lo que no haría: modificar el estado con un parámetro de acción
+[source,http]
+----
+PUT /pedidos/15?accion=facturar
+----
+
+Esta variante trata de resolverlo cambiando el _estado_ del pedido, pero tiene problemas: el parámetro `accion` es en el fondo un verbo (RPC encubierto), y un `PUT` debería sustituir el recurso completo, no desencadenar una acción. Si se quisiera modelar solo un cambio de estado, sería más correcto un `PATCH /pedidos/15` con el nuevo estado en el cuerpo.
+
+Para esa estrategia, el pedido tendría una representación como esta, donde el campo `estado` refleja en qué punto del ciclo de vida se encuentra:
+
+[source,json]
+----
+{
+  "codigo": "...",
+  "fecha": "...",
+  "direccionEntrega": "...",
+  "detalles": [ ],
+  "formaDePago": "...",
+  "estado": "facturado"
+}
+----
+
+== Hipermedia: el nivel que casi nadie alcanza
+
+=== HATEOAS
+
+En la tesis de Fielding, REST se define por un conjunto de restricciones. Una de ellas, la más olvidada, es *HATEOAS*: _Hypermedia As The Engine Of Application State_ (la hipermedia como motor del estado de la aplicación).
+
+La idea es la misma que en la web: una persona no teclea URLs, *sigue enlaces*. La página le muestra lo que puede hacer a continuación. En una API REST, las representaciones de los recursos llevan *enlaces* a los recursos relacionados y a las operaciones disponibles en ese momento, y el cliente navega siguiéndolos en lugar de construir las URLs por su cuenta.
+
+[source,json]
+----
+{
+  "id": 15,
+  "estado": "pendiente",
+  "total": 120.50,
+  "_links": {
+    "self":          { "href": "/pedidos/15" },
+    "cliente":       { "href": "/clientes/33" },
+    "detalles":      { "href": "/pedidos/15/detalles" },
+    "ordenDeCompra": { "href": "/ordenesDeCompra", "method": "POST" }
+  }
+}
+----
+
+Lo interesante es que *los enlaces cambian según el estado del recurso*. Mientras el pedido está pendiente, aparece el enlace `ordenDeCompra`, que indica que se puede convertir en orden de compra. Una vez convertido, ese enlace desaparece y aparece otro que apunta a la orden creada:
+
+[source,json]
+----
+{
+  "id": 15,
+  "estado": "convertido",
+  "total": 120.50,
+  "_links": {
+    "self":          { "href": "/pedidos/15" },
+    "cliente":       { "href": "/clientes/33" },
+    "detalles":      { "href": "/pedidos/15/detalles" },
+    "ordenDeCompra": { "href": "/ordenesDeCompra/40" }
+  }
+}
+----
+
+Ventajas:
+
+* *El cliente no necesita conocer las reglas de negocio.* No tiene que saber en qué estados se puede convertir un pedido: si el enlace está, se puede; si no está, no.
+* *El servidor puede cambiar sus URLs* sin romper a los clientes, siempre que estos sigan los enlaces en lugar de tenerlos escritos en el código.
+* *La API es autodescriptiva y explorable*, igual que un sitio web.
+
+[NOTE]
+====
+No hay un único formato estándar para los enlaces. El del ejemplo (`_links`) sigue la convención *HAL* (`application/hal+json`). Existen otros, como JSON:API, Siren o JSON-LD. También se pueden enviar enlaces en la cabecera HTTP `Link` (RFC 8288).
+====
+
+[IMPORTANT]
+====
+Para Fielding, una API sin hipertexto *no es REST*; lo ha dicho públicamente. En la práctica, la inmensa mayoría de las APIs que se llaman REST no implementan HATEOAS.
+====
+
+=== El modelo de madurez de Richardson
+
+Leonard Richardson propuso una escala para medir cuánto de REST tiene una API. Es una forma muy útil de situar todo lo visto hasta ahora.
+
+[cols="1,2,4", options="header"]
+|===
+| Nivel | Nombre | Descripción
+
+| 0
+| El pantano de POX
+| Un único endpoint al que se envía todo por `POST`, indicando en el cuerpo qué operación se quiere (`{"operacion": "listarPedidos"}`). Es RPC sobre HTTP: HTTP se usa solo como transporte. Ejemplos clásicos: SOAP, XML-RPC.
+
+| 1
+| Recursos
+| Cada recurso tiene su propia ruta (`/pedidos`, `/pedidos/15`), pero se sigue usando un único método para todo. Corresponde a los pasos 1, 2 y 3 de este documento.
+
+| 2
+| Métodos HTTP
+| Se usan los métodos con su semántica (`GET` lee, `POST` crea, `DELETE` borra...) y los códigos de estado con su significado. Corresponde al paso 4. *Aquí está la gran mayoría de las APIs reales.*
+
+| 3
+| Controles hipermedia
+| Las respuestas incluyen enlaces que guían al cliente (HATEOAS). Solo en este nivel la API es REST en el sentido de Fielding.
+|===
+
+== Códigos de estado por operación
+
+Cada operación tiene unos códigos de respuesta esperables. Usarlos bien es parte del nivel 2 de Richardson: el cliente puede reaccionar al resultado sin tener que leer el cuerpo.
+
+[cols="2,2,4", options="header"]
+|===
+| Operación | Éxito | Errores habituales
+
+| `GET /pedidos`
+| `200 OK` (la lista puede estar vacía: sigue siendo `200`, no `404`)
+| `400 Bad Request` si los filtros son inválidos
+
+| `GET /pedidos/15`
+| `200 OK`
+| `404 Not Found`
+
+| `POST /pedidos`
+| `201 Created` + cabecera `Location: /pedidos/16`
+| `400 Bad Request` (cuerpo mal formado), `422 Unprocessable Content` (datos bien formados pero inválidos)
+
+| `PUT /pedidos/15`
+| `200 OK` (con el recurso) o `204 No Content` (sin cuerpo); `201 Created` si no existía y se ha creado
+| `400`, `422`, `409 Conflict`, `412 Precondition Failed`
+
+| `PATCH /pedidos/15`
+| `200 OK` o `204 No Content`
+| `404`, `400`, `422`, `409`
+
+| `DELETE /pedidos/15`
+| `204 No Content`
+| `404 Not Found`, `409 Conflict` (no se puede borrar, p. ej. porque ya está facturado)
+
+| `POST /ordenesDeCompra`
+| `201 Created` + `Location`
+| `404` (el pedido no existe), `409 Conflict` (el pedido ya está convertido)
+|===
+
+Y algunos códigos transversales, válidos para cualquier operación:
+
+[cols="1,4", options="header"]
+|===
+| Código | Cuándo
+
+| `401 Unauthorized` | No se ha enviado autenticación, o es inválida. El nombre engaña: significa "no autenticado".
+| `403 Forbidden` | El usuario está autenticado, pero no tiene permiso para esta operación.
+| `405 Method Not Allowed` | La ruta existe, pero no admite ese método (p. ej. `DELETE /pedidos`).
+| `406 Not Acceptable` | El servidor no puede responder en ninguno de los formatos pedidos en `Accept`.
+| `415 Unsupported Media Type` | El servidor no entiende el formato del cuerpo indicado en `Content-Type`.
+| `429 Too Many Requests` | El cliente ha superado el límite de peticiones permitido.
+| `500 Internal Server Error` | Fallo inesperado en el servidor. Nunca debería deberse a un error del cliente.
+|===
+
+[TIP]
+====
+Distinción clave: los `4xx` dicen "*tú* has hecho algo mal, no repitas la misma petición", y los `5xx` dicen "*yo* he fallado, quizá funcione si lo intentas más tarde".
+====
+
+== Formato de los errores
+
+El código de estado indica el tipo de error, pero el cliente suele necesitar más detalle: qué campo es inválido, por qué no se puede borrar... Cada API inventaba su propio formato hasta que se estandarizó uno: *Problem Details for HTTP APIs* (RFC 9457), con el tipo de contenido `application/problem+json`.
+
+[source,http]
+----
+HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+
+{
+  "type": "https://api.tienda.com/errores/pedido-ya-convertido",
+  "title": "El pedido ya ha sido convertido en orden de compra",
+  "status": 409,
+  "detail": "El pedido 15 se convirtió en la orden de compra 40 el 2026-10-21.",
+  "instance": "/ordenesDeCompra"
+}
+----
+
+[cols="1,4", options="header"]
+|===
+| Campo | Significado
+
+| `type` | URI que identifica el tipo de error. Puede apuntar a una página que lo documente.
+| `title` | Descripción breve y legible del tipo de error. Es la misma para todas las veces que ocurra.
+| `status` | El código HTTP, repetido por comodidad.
+| `detail` | Explicación concreta de *esta* ocurrencia.
+| `instance` | URI de la petición o del recurso donde ocurrió.
+|===
+
+Se pueden añadir campos propios. Por ejemplo, para errores de validación:
+
+[source,json]
+----
+{
+  "type": "https://api.tienda.com/errores/validacion",
+  "title": "Los datos enviados no son válidos",
+  "status": 422,
+  "errores": [
+    { "campo": "telefono", "mensaje": "Debe tener 9 dígitos" },
+    { "campo": "nombre",   "mensaje": "Es obligatorio" }
+  ]
+}
+----
+
+== Colecciones grandes
+
+Un `GET /peliculas` sobre una base de datos con millones de registros no puede devolverlos todos. Los query parameters, que ya vimos que sirven para filtrar los recursos de la colección, se usan también para paginar, ordenar y elegir campos.
+
+=== Paginación
+
+[source,http]
+----
+GET /peliculas?pagina=2&tamanio=20
+----
+
+La respuesta incluye los datos de la página y, siguiendo la idea de HATEOAS, enlaces para navegar:
+
+[source,json]
+----
+{
+  "contenido": [ { "id": 21, "titulo": "..." }, "..." ],
+  "pagina": 2,
+  "tamanio": 20,
+  "totalElementos": 1543,
+  "totalPaginas": 78,
+  "_links": {
+    "self":     { "href": "/peliculas?pagina=2&tamanio=20" },
+    "first":    { "href": "/peliculas?pagina=1&tamanio=20" },
+    "prev":     { "href": "/peliculas?pagina=1&tamanio=20" },
+    "next":     { "href": "/peliculas?pagina=3&tamanio=20" },
+    "last":     { "href": "/peliculas?pagina=78&tamanio=20" }
+  }
+}
+----
+
+[NOTE]
+====
+La paginación por número de página (_offset_) es sencilla, pero en colecciones que cambian mucho puede saltarse o repetir elementos, y es lenta en páginas muy avanzadas. La alternativa es la *paginación por cursor*: el servidor devuelve un marcador opaco (`?despuesDe=eyJpZCI6NDB9`) que indica desde dónde continuar.
+====
+
+=== Ordenación
+
+[source,http]
+----
+GET /peliculas?orden=fechaEstreno         # ascendente
+GET /peliculas?orden=-fechaEstreno        # descendente (convención del signo menos)
+GET /peliculas?orden=-calificacion,titulo # varios criterios
+----
+
+=== Selección de campos
+
+Para no transferir más de lo necesario, el cliente puede pedir solo algunos campos:
+
+[source,http]
+----
+GET /peliculas?campos=id,titulo,fechaEstreno
+----
+
+=== Todo junto
+
+Filtros, paginación, ordenación y selección de campos se combinan sin problema:
+
+[source,http]
+----
+GET /peliculas?genero=accion&orden=-fechaEstreno&pagina=1&tamanio=10&campos=id,titulo
+----
+
+== Consecuencias de "sin estado": autenticación
+
+HTTP no tiene estado, y REST lo exige también: el servidor no guarda nada del cliente entre una petición y otra. La consecuencia más importante es que *cada petición debe llevar sus credenciales*.
+
+En aplicaciones web tradicionales se usaban sesiones: el servidor guardaba en memoria quién estaba conectado y el cliente solo enviaba una cookie con el identificador de sesión. Eso es estado en el servidor, y rompe una de las ventajas de REST: si hay diez servidores detrás de un balanceador, cualquier petición debe poder atenderla cualquiera de ellos.
+
+En una API REST, el cliente envía un token en la cabecera `Authorization`:
+
+[source,http]
+----
+GET /pedidos/15
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzMyIsInJvbCI6ImNsaWVudGUifQ.4f8...
+----
+
+El formato de token más habitual es *JWT* (_JSON Web Token_), que contiene dentro la identidad del usuario y sus permisos, firmados por el servidor. El servidor no necesita buscar nada en memoria: verifica la firma y ya sabe quién es y qué puede hacer. Los tokens suelen obtenerse mediante *OAuth 2.0* / *OpenID Connect*.
+
+[WARNING]
+====
+Como las credenciales viajan en cada petición, una API REST *debe* servirse siempre por HTTPS. Un token interceptado permite suplantar al usuario hasta que caduque.
+====
+
+== Caché y concurrencia
+
+=== Caché: no descargar lo que no ha cambiado
+
+El servidor puede indicar cuánto tiempo es válida una respuesta y acompañarla de una "huella" de su contenido, el *ETag*:
+
+[source,http]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Cache-Control: max-age=60
+ETag: "a3f9c1"
+
+{ "id": 15, "estado": "pendiente", ... }
+----
+
+* `Cache-Control: max-age=60`: durante 60 segundos, el cliente (o un proxy intermedio) puede reutilizar la respuesta sin preguntar al servidor.
+* Pasado ese tiempo, el cliente pregunta si ha cambiado, enviando el ETag que tiene:
+
+[source,http]
+----
+GET /pedidos/15
+If-None-Match: "a3f9c1"
+----
+
+Si no ha cambiado, el servidor responde sin cuerpo y el cliente reutiliza su copia:
+
+[source,http]
+----
+HTTP/1.1 304 Not Modified
+ETag: "a3f9c1"
+----
+
+Este mecanismo solo funciona porque `GET` es *seguro*: los intermediarios saben que pueden guardar y reutilizar sus respuestas.
+
+=== Concurrencia optimista: que dos clientes no se pisen
+
+`PUT` sustituye el recurso completo, así que hay un problema clásico:
+
+. Ana hace `GET /pedidos/15` y recibe la versión con ETag `"a3f9c1"`.
+. Bruno hace lo mismo y recibe la misma versión.
+. Bruno cambia la dirección de entrega y hace `PUT`. El pedido pasa a la versión `"7b2e04"`.
+. Ana cambia la forma de pago y hace `PUT` con su copia antigua. *El cambio de Bruno se pierde sin que nadie se entere.*
+
+La solución es que el cliente envíe en `If-Match` el ETag de la versión que modificó:
+
+[source,http]
+----
+PUT /pedidos/15
+Content-Type: application/json
+If-Match: "a3f9c1"
+
+{ ... }
+----
+
+Si el recurso ya no está en esa versión, el servidor rechaza la petición:
+
+[source,http]
+----
+HTTP/1.1 412 Precondition Failed
+----
+
+Ana sabe entonces que debe volver a leer el pedido, ver los cambios de Bruno y aplicar los suyos sobre la versión actual. El servidor puede incluso *exigir* `If-Match` en las modificaciones, respondiendo `428 Precondition Required` si no viene.
+
+== Versionado
+
+Una API publicada tiene clientes que dependen de ella. Cuando hay que hacer un cambio incompatible (renombrar un campo, cambiar el tipo de un dato, eliminar una ruta), hay que publicar una nueva versión sin romper a los clientes existentes.
+
+Primero, qué *no* requiere nueva versión: añadir campos nuevos a una respuesta, añadir rutas nuevas o añadir parámetros opcionales. Los clientes bien hechos ignoran lo que no conocen.
+
+Para los cambios incompatibles hay tres estrategias habituales:
+
+[cols="1,2,3", options="header"]
+|===
+| Estrategia | Ejemplo | Comentario
+
+| En la ruta
+| `GET /v1/pedidos` +
+`GET /v2/pedidos`
+| La más usada, explícita y fácil de probar desde un navegador. Los puristas objetan que el recurso "pedido 15" es el mismo en ambas versiones y no debería tener dos URIs.
+
+| En una cabecera (negociación de contenido)
+| `Accept: application/vnd.tienda.v2+json`
+| La más fiel a HTTP: el recurso es el mismo y lo que cambia es la representación. Menos cómoda de probar y de depurar.
+
+| En un query parameter
+| `GET /pedidos?version=2`
+| Sencilla, pero mezcla la versión con los filtros.
+|===
+
+Sea cual sea la estrategia, conviene anunciar con antelación la retirada de las versiones antiguas. Para ello existen las cabeceras `Deprecation` y `Sunset` (RFC 8594).
+
+== Documentación: OpenAPI
+
+Una API sin documentación es inutilizable. El estándar de facto para describir APIs REST es *OpenAPI* (antes llamado Swagger): un fichero YAML o JSON que describe rutas, métodos, parámetros, cuerpos, respuestas y esquemas de datos.
+
+[source,yaml]
+----
+openapi: 3.1.0
+info:
+  title: API de la tienda
+  version: 1.0.0
+paths:
+  /pedidos/{id}:
+    get:
+      summary: Buscar un pedido por id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: El pedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '404':
+          description: El pedido no existe
+components:
+  schemas:
+    Pedido:
+      type: object
+      properties:
+        id:     { type: integer }
+        estado: { type: string, enum: [pendiente, convertido] }
+        total:  { type: number }
+----
+
+A partir de ese fichero se puede:
+
+* Generar documentación navegable e interactiva (Swagger UI, Redoc), desde la que se pueden lanzar peticiones de prueba.
+* Generar código cliente y esqueletos de servidor en multitud de lenguajes.
+* Validar automáticamente que las peticiones y respuestas cumplen el contrato.
+
+Hay dos enfoques de trabajo: *code first* (se escribe el código y el fichero OpenAPI se genera a partir de anotaciones) y *contract first* o *API first* (se diseña primero el contrato, se acuerda con los equipos que lo van a consumir, y después se implementa). El segundo encaja muy bien con los pasos de diseño de este documento: identificar recursos, decidir su representación, asignar rutas y asociar operaciones es exactamente escribir un contrato OpenAPI.
+
+== Resumen
+
+[cols="1,3", options="header"]
+|===
+| Idea | En una frase
+
+| HTTP
+| Protocolo de texto, sin estado, con mensajes formados por cabecera y cuerpo.
+
+| Métodos
+| `GET` lee, `POST` crea, `PUT` reemplaza, `PATCH` modifica parcialmente, `DELETE` borra.
+
+| Query parameters
+| Filtran los recursos que identifica la ruta.
+
+| REST
+| Estilo de diseño de APIs basado en recursos identificados por rutas.
+
+| Los 4 pasos
+| (1) Identificar recursos, (2) decidir su representación, (3) asignarles carpetas/rutas, (4) asociar operaciones a pares método + ruta.
+
+| Colecciones
+| En plural: `/clientes`, `/clientes/15`; nunca `/cliente/15`.
+
+| Relaciones
+| Se expresan con subcarpetas (`/clientes/33/facturas`) o con query parameters (`/facturas?idCliente=33`).
+
+| Operaciones no-CRUD
+| Se modelan pensando en *qué recurso se crea o cambia*, no inventando verbos: facturar un pedido = `POST /ordenesDeCompra` con el id del pedido en el body.
+
+| HATEOAS
+| Las representaciones incluyen enlaces a lo que se puede hacer a continuación; es el nivel 3 de Richardson y, según Fielding, lo que hace a una API REST de verdad.
+
+| Códigos de estado
+| `201` + `Location` al crear, `204` al borrar, `4xx` si el error es del cliente y `5xx` si es del servidor.
+
+| Errores
+| Con formato estándar: Problem Details (`application/problem+json`).
+
+| Colecciones grandes
+| Paginación, ordenación y selección de campos mediante query parameters.
+
+| Autenticación
+| Sin sesiones: un token en `Authorization` en cada petición, siempre por HTTPS.
+
+| Caché y concurrencia
+| `ETag` + `If-None-Match` para no descargar lo que no ha cambiado; `If-Match` para no pisar cambios ajenos.
+
+| Versionado
+| Solo para cambios incompatibles: en la ruta (`/v2/...`) o en la cabecera `Accept`.
+
+| Documentación
+| Un contrato OpenAPI, mejor diseñado antes que el código.
+|===

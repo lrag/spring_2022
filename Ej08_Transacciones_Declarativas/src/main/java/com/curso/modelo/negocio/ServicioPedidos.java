@@ -19,17 +19,17 @@ import com.curso.modelo.persistencia.PedidoDao;
 public class ServicioPedidos {
 
 	/*@Autowired*/ private PedidoDao pedidoDao;
-	/*@Autowired*/ private GestorBancos gestorBancos;
-	/*@Autowired*/ private GestorOfertas gestorOfertas;
+	/*@Autowired*/ private ServicioBancos gestorBancos;
+	/*@Autowired*/ private ServicioOfertas gestorOfertas;
 	/*@Autowired*/ private ServicioAlmacen gestorAlmacen;
-	/*@Autowired*/ private GestorTransportes gestorTransportes;
+	/*@Autowired*/ private ServicioTransportes gestorTransportes;
 	
 	public ServicioPedidos(
 			PedidoDao pedidoDao, 
-			GestorBancos gestorBancos, 
+			ServicioBancos gestorBancos, 
 			ServicioAlmacen gestorAlmacen,
-			GestorTransportes gestorTransportes, 
-			GestorOfertas gestorOfertas
+			ServicioTransportes gestorTransportes, 
+			ServicioOfertas gestorOfertas
 		) {
 		super();
 		this.pedidoDao = pedidoDao;
